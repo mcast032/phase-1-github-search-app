@@ -4,23 +4,23 @@ document.addEventListener('DOMContentLoaded', function() {
 const userList = document.getElementById('user-list');
 const reposList = document.getElementById('repos-list');
 
-form.addEventListener('submit', async function(event) {
+form.addEventListener('submit', function(event) {
   event.preventDefault();
   const searchValue = document.getElementById('search').value.trim();
   if (searchValue === '') return;
 
-  try {
-    // Clear previous results
-    userList.innerHTML = '';
-    reposList.innerHTML = '';
+  // Clear previous results
+  userList.innerHTML = '';
+  reposList.innerHTML = '';
 
-    // Fetch users from GitHub API
-    const usersResponse = await fetch(`https://api.github.com/search/users?q=${searchValue}`, {
-      headers: {
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
-    const usersData = await usersResponse.json();
+  // Fetch users from GitHub API
+  fetch(`https://api.github.com/search/users?q=${searchValue}`, {
+    headers: {
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  })
+  .then(response => response.json())
+  .then(usersData => {
     console.log(usersData);
     const users = usersData.items; // Array of users
 
@@ -34,21 +34,27 @@ form.addEventListener('submit', async function(event) {
           <a href='${user.html_url}' target='_blank'>Profile</a>
         </div>
       `;
-      userItem.addEventListener('click', async function() {
+      userItem.addEventListener('click', function() {
         // Fetch repositories for this user
-        const reposResponse = await fetch(user.repos_url, {
+        fetch(user.repos_url, {
           headers: {
             'Accept': 'application/vnd.github.v3+json'
           }
+        })
+        .then(response => response.json())
+        .then(reposData => {
+          displayRepos(reposData);
+        })
+        .catch(error => {
+          console.error('Error fetching repositories:', error);
         });
-        const reposData = await reposResponse.json();
-        displayRepos(reposData);
       });
       userList.appendChild(userItem);
     });
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
+  })
+  .catch(error => {
+    console.error('Error fetching users:', error);
+  });
 });
 
 function displayRepos(repos) {
@@ -62,7 +68,6 @@ function displayRepos(repos) {
     reposList.appendChild(repoItem);
   });
 }
-
     
   });
 
